@@ -4,6 +4,8 @@ conn = sqlite3.connect('./DB/tranz.sqlite')
 conn.text_factory = str
 c = conn.cursor()
 
+conStr = lambda x: [str(r) for r in x]
+
 def Query(sql):
 	print sql
 	c.execute(sql)
@@ -18,19 +20,16 @@ def getRoutesIds(bus_line):
 	sql = 'select id from routes where bus_num = {0}'.format(bus_line)
 	c.execute(sql)
 	l = c.fetchall()
-	print [r[0] for r in l]
 	return [r[0] for r in l]
 
 def getTripsIdsfromRoutes(routes_ids):
 	sql = 'select service_id from trips where route_id in {0}'.format(tuple(routes_ids))
 	l = GetFirst(Query(sql))
-	print l
 	return l
 
 def getServiceIdsFromTripsIds(trips_ids):
 	sql = 'select service_id from trips where id in {0}'.format(tuple(trips_ids))
 	l = GetFirst(Query(sql))
-	print l
 	return l
 
 def getServiceIdsinDay(fullService_ids, day):
@@ -38,19 +37,23 @@ def getServiceIdsinDay(fullService_ids, day):
 	print sql
 	c.execute(sql)
 	l = c.fetchall()
-	print [r[0] for r in l]
 	return [r[0] for r in l]
 
-def getShapesIdsfromServiceIds(service_ids):
-	sql = 'select distinct shape_id from trips where service_id in {0}'.format(tuple(service_ids))
+def getShapesIdsfromIds(ids):
+	sql = 'select distinct shape_id from trips where id in {0}'.format(tuple(ids))
 	l = GetFirst(Query(sql))
-	print l
 	return l
 
-pl = getRoutesIds(921)
-pl = getTripsIdsfromRoutes(pl)
-pl = getServiceIdsinDay(pl, 'sunday')
-pl = getShapesIdsfromServiceIds(pl)
+def getTripIds(colum,value):
+    sql = 'select distinct id from trips where {0} in {1}'.format(colum,tuple(value))
+    return conStr(GetFirst(Query(sql)))
+
+trip_ids = getTripIds('Route_id',getRoutesIds(921))
+service_ids = getServiceIdsFromTripsIds(trip_ids)
+service_ids = getServiceIdsinDay(service_ids, 'sunday')
+trip_ids = getTripIds('Service_id',service_ids)
+pl = getShapesIdsfromIds(trip_ids)
+print len(pl)
 
 c.close()
 conn.close()
