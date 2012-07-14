@@ -69,11 +69,32 @@ def getTripIds(colum,value):
     sql = 'select distinct id from trips where {0} in {1}'.format(colum,tuple(value))
     return conStr(GetFirst(Query(sql)))
 
-trip_ids = getTripIds('Route_id',getRoutesIds(921))
+def getShapeIdsLocation(lat,lon,acc,ids):
+    checked = {}
+    sql = ' select * from lines_shapes where id shape_id in {0}'.format(tuple(ids))
+    l = Query(sql)
+    res = []
+    for i in l:
+        for point in i[1].split(';'):
+            if point in checked:
+                if checked[point] == True:
+                    res.append(i)
+                    break
+            else:
+                if calc_distance(lat,lon,acc,point) == True:
+                    checked[point] = True
+                    res.append(i)
+                    break
+                else:
+                    checked[point] = False
+    return res
+
+trip_ids = getTripIds('Route_id',getRoutesIds(45))
 service_ids = getServiceIdsFromTripsIds(trip_ids)
 service_ids = getServiceIdsinDay(service_ids, 'sunday')
 trip_ids = getTripIds('Service_id',service_ids)
 pl = getShapesIdsfromIds(trip_ids)
+print len(trip_ids)
 print len(pl)
 
 c.close()
