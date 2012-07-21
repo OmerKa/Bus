@@ -1,6 +1,7 @@
 import sqlite3
 
 conn = sqlite3.connect('./DB/tranz.sqlite')
+conn.text_factory = str
 
 def Query(sql):
     c = conn.cursor()
